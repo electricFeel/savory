@@ -31,6 +31,22 @@ defmodule Savory.Mixfile do
     end
   end
 
+  defp description do
+    """
+    An Elixir implementation of Freza's salt_nif which interfaces with libsodium, 
+    a wrapper for the cryptographic primitive libary NaCl.
+    """
+  end
+
+  defp package do
+    [
+      files: ["config", "src", "lib", "mix.exs", "README*"],
+      contributers: ["ElectricFeel", "Freza"],
+      licenses: ["MIT"],
+      links: %{"Github" => "https://github.com/electricFeel/savory"} 
+    ]
+  end
+
   # Dependencies can be Hex packages:
   #
   #   {:mydep, "~> 0.3.0"}
