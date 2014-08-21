@@ -8,7 +8,10 @@ defmodule Savory.Mixfile do
      version: "0.0.1",
      elixir: "~> 0.15.1",
      deps: deps,
-     aliases: aliases
+     aliases: aliases,
+     description: description,
+     package: package,
+     docs: [readme: true, main: "README"]
      ]
   end
 
