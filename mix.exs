@@ -43,7 +43,7 @@ defmodule Savory.Mixfile do
 
   defp package do
     [
-      files: ["config", "src", "lib", "mix.exs", "README*"],
+      files: ["config", "src", "lib", "mix.exs", "Makefile", "README*"],
       contributers: ["ElectricFeel", "Freza"],
       licenses: ["MIT"],
       links: %{"Github" => "https://github.com/electricFeel/savory"} 
