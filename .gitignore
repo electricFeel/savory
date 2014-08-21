@@ -1,5 +1,10 @@
 /priv
 /_build
 /deps
-erl_crash.dump
+.eunit
+deps
+*.o
+*.beam
+*.plt
 *.ez
+erl_crash.dump
