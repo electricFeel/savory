@@ -6,7 +6,7 @@ defmodule Savory.Mixfile do
   def project do
     [app: :savory,
      version: "0.0.2",
-     elixir: "~> 0.15.1",
+     elixir: "~> 1.1",
      deps: deps,
      aliases: aliases,
      description: description,
