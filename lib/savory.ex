@@ -32,6 +32,8 @@ defmodule Savory do
   def crypto_sign_keypair(), do: Server.make_sign_keypair()
   def crypto_sign(message, sk), do: Nif.salt_sign(message, sk)
   def crypto_sign_open(signed_msg, pk), do: Nif.salt_sign_open(signed_msg, pk)
+  def crypto_sign_detached(msg, sk), do: Nif.salt_sign_detached(msg, sk)
+  def crypto_sign_verify_detached(sig, msg, pk), do: Nif.salt_sign_verify_detached(sig, msg, pk)
 
   ###Secret-key
   #Authenticated encrpytion
