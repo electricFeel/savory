@@ -2,7 +2,7 @@ defmodule Savory do
   alias Savory.SavoryNif, as: Nif
   alias Savory.Server, as: Server
   alias Savory.Config, as: C
-  
+
   #public key authenticated encryption
   def crypto_box_keypair(), do: Server.make_box_keypair()
 
@@ -23,7 +23,7 @@ defmodule Savory do
   def crypto_box_open_afternm(cipher_text, nonce, context) do
     Nif.salt_box_open_afternm([crypto_box_boxzerobytes() | cipher_text], nonce, context)
   end
-  
+
   #scalar multiplication
   def crypto_scalarmult(integer, group_p), do: Nif.salt_scalarmul(integer, group_p)
   def crypto_scalarmult_base(integer), do: Nif.salt_scalarmult(integer)
@@ -34,6 +34,16 @@ defmodule Savory do
   def crypto_sign_open(signed_msg, pk), do: Nif.salt_sign_open(signed_msg, pk)
   def crypto_sign_detached(msg, sk), do: Nif.salt_sign_detached(msg, sk)
   def crypto_sign_verify_detached(sig, msg, pk), do: Nif.salt_sign_verify_detached(sig, msg, pk)
+
+  @doc """
+  Converts an Ed25519 public key `pk` to a Curve25519 public key.
+  """
+  def crypto_sign_ed25519_pk_to_curve25519(pk), do: Nif.salt_sign_ed25519_pk_to_curve25519(pk)
+
+  @doc """
+  Converts an Ed25519 secret key `pk` to a Curve25519 secret key.
+  """
+  def crypto_sign_ed25519_sk_to_curve25519(sk), do: Nif.salt_sign_ed25519_sk_to_curve25519(sk)
 
   ###Secret-key
   #Authenticated encrpytion
@@ -68,7 +78,7 @@ defmodule Savory do
 
   #random
   def crypto_random_bytes(n), do: Server.make_random_bytes(n)
-  
+
   #zero bytes
 
   defp crypto_secretbox_zerobytes(), do: zero_bytes(C.crypto_secretbox_zerobytes())
