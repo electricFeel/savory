@@ -503,7 +503,7 @@ salt_scalarmult(nif_heap_t *hp, int argc, const nif_term_t argv[])
   /* Allocate space for plain text. NB: Passing ENOMEM as BADARG. */
   if (! enif_alloc_binary(crypto_scalarmult_BYTES, &q))
     return (BADARG);
-  
+
   crypto_scalarmult(q.data, n.data, p.data);
   return (enif_make_binary(hp, &q));
 }
@@ -529,7 +529,7 @@ salt_scalarmult_base(nif_heap_t *hp, int argc, const nif_term_t argv[])
   /* Allocate space for plain text. NB: Passing ENOMEM as BADARG. */
   if (! enif_alloc_binary(crypto_scalarmult_BYTES, &q))
     return (BADARG);
-  
+
   crypto_scalarmult_base(q.data, n.data);
   return (enif_make_binary(hp, &q));
 }
@@ -714,6 +714,48 @@ salt_sign_verify_detached(nif_heap_t *hp, int argc, const nif_term_t argv[])
   } else {
     return (enif_make_atom(hp, "ok"));
   }
+}
+
+static nif_term_t
+salt_sign_ed25519_pk_to_curve25519(nif_heap_t *hp, int argc, const nif_term_t argv[])
+{
+  nif_bin_t ed_pk;
+  nif_bin_t c_pk;
+  nif_term_t raw;
+
+  if (argc != 1)
+    return (BADARG);
+
+  if (! enif_inspect_binary(hp, argv[0], &ed_pk))
+    return (BADARG);
+
+  if (! enif_alloc_binary(crypto_box_PUBLICKEYBYTES, &c_pk))
+    return (BADARG);
+
+  (void)crypto_sign_ed25519_pk_to_curve25519(c_pk.data, ed_pk.data);
+  raw = enif_make_binary(hp, &c_pk);
+  return (raw);
+}
+
+static nif_term_t
+salt_sign_ed25519_sk_to_curve25519(nif_heap_t *hp, int argc, const nif_term_t argv[])
+{
+  nif_bin_t ed_sk;
+  nif_bin_t c_sk;
+  nif_term_t raw;
+
+  if (argc != 1)
+    return (BADARG);
+
+  if (! enif_inspect_binary(hp, argv[0], &ed_sk))
+    return (BADARG);
+
+  if (! enif_alloc_binary(crypto_box_SECRETKEYBYTES, &c_sk))
+    return (BADARG);
+
+  (void)crypto_sign_ed25519_sk_to_curve25519(c_sk.data, ed_sk.data);
+  raw = enif_make_binary(hp, &c_sk);
+  return (raw);
 }
 
 static nif_term_t
@@ -1229,14 +1271,14 @@ salt_worker_loop(void *arg)
   sc->sc_req_first = NULL;
   sc->sc_req_lastp = &sc->sc_req_first;
   sc->sc_req_npend = 0;
-  
+
   enif_mutex_unlock(sc->sc_lock);
 
   /* Handle all requests, release when done. */
  next:
   salt_handle_req(sc, sm);
   tmp = sm->msg_next;
-  
+
   enif_free_env(sm->msg_heap);
   enif_free(sm);
 
@@ -1272,7 +1314,7 @@ salt_handle_req(struct salt_pcb *sc, struct salt_msg *sm)
       err = "enomem";
       goto fail_1;
     }
-    
+
     crypto_box_keypair(pk.data, sk.data);
     salt_reply_keypair(sm, &pk, &sk);
     break;
@@ -1286,7 +1328,7 @@ salt_handle_req(struct salt_pcb *sc, struct salt_msg *sm)
       err = "enomem";
       goto fail_1;
     }
-    
+
     crypto_sign_keypair(pk.data, sk.data);
     salt_reply_keypair(sm, &pk, &sk);
     break;
@@ -1393,7 +1435,7 @@ print_bytes(const char *tag, nif_bin_t *buf)
   iov[0].iov_len = strlen(tag);
   iov[1].iov_base = str;
   iov[1].iov_len = cnt;
-  
+
   str[0] = ' ';
   str[1] = '0';
   str[2] = 'x';
@@ -1476,6 +1518,8 @@ static nif_func_t salt_exports[] = {
   {"salt_sign_open", 2, salt_sign_open},
   {"salt_sign_detached", 2, salt_sign_detached},
   {"salt_sign_verify_detached", 3, salt_sign_verify_detached},
+  {"salt_sign_ed25519_pk_to_curve25519", 1, salt_sign_ed25519_pk_to_curve25519},
+  {"salt_sign_ed25519_sk_to_curve25519", 1, salt_sign_ed25519_sk_to_curve25519},
   {"salt_secretbox", 3, salt_secretbox},
   {"salt_secretbox_open", 3, salt_secretbox_open},
   {"salt_stream", 3, salt_stream},

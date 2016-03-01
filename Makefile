@@ -5,7 +5,7 @@ ERL_I :=$(shell erl -eval 'io:format("~s~n", [lists:concat([code:lib_dir(erl_int
 ERL_L :=$(shell erl -eval 'io:format("~s~n", [lists:concat([code:lib_dir(erl_interface), "/lib"])])' -s init stop -noshell)
 ARCH :=$(shell erl -eval 'io:format("~s~n", [lists:concat([erlang:system_info(system_architecture)])])' -s init stop -noshell)
 
-LIBSODIUM_I = -Wall -Werror -I/usr/local/include/sodium
+LIBSODIUM_I = -Wall -I/usr/local/include/sodium
 CFLAGS = -c -g -Wall -fPIC
 ERLANG_IFLAGS=-I$(ERTS_I) -I$(ERL_I)
 ERLANG_LFLAGS =  -shared -L"$(ERL_L)" -lerl_interface -lei -L/usr/local/lib -Wl,-R/usr/local/lib -lsodium
