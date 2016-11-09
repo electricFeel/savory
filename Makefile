@@ -20,7 +20,3 @@ all:
 	mkdir -p priv/$(ARCH) &&\
 	$(CC) $(CFLAGS) $(DRV_CFLAGS) $(ERLANG_IFLAGS) $(LIBSODIUM_I) src/salt_nif.c -o src/salt_nif.o 2>&1 >/dev/null
 	$(CC) src/salt_nif.o $(ERLANG_LFLAGS) -o priv/$(ARCH)/salt_nif.so
-	mkdir -p  ../../_build/dev/lib/savory/priv/$(ARCH)/
-	if [ "$(stat -c "%d:%i" ./priv/$(ARCH)/salt_nif.so)" != "$(stat -c "%d:%i" ../../_build/dev/lib/savory/priv/$(ARCH)/salt_nif.so)" ]; then
-		cp ./priv/$(ARCH)/salt_nif.so ../../_build/dev/lib/savory/priv/$(ARCH)/
-	fi
