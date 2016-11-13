@@ -39,17 +39,17 @@
 #include <unistd.h>
 #endif
 
-#include <crypto_box.h>
-#include <crypto_scalarmult_curve25519.h>   /* XXXjh crypto_scalarmult.h missing */
-#include <crypto_sign.h>
-#include <crypto_secretbox.h>
-#include <crypto_stream.h>
-#include <crypto_auth.h>
-#include <crypto_onetimeauth.h>
-#include <crypto_hash.h>
-#include <crypto_verify_16.h>
-#include <crypto_verify_32.h>
-#include <randombytes.h>
+#include <sodium/crypto_box.h>
+#include <sodium/crypto_scalarmult_curve25519.h>   /* XXXjh crypto_scalarmult.h missing */
+#include <sodium/crypto_sign.h>
+#include <sodium/crypto_secretbox.h>
+#include <sodium/crypto_stream.h>
+#include <sodium/crypto_auth.h>
+#include <sodium/crypto_onetimeauth.h>
+#include <sodium/crypto_hash.h>
+#include <sodium/crypto_verify_16.h>
+#include <sodium/crypto_verify_32.h>
+#include <sodium/randombytes.h>
 
 /* XXXjh crypto_scalarmult.h missing */
 #define crypto_scalarmult_SCALARBYTES   crypto_scalarmult_curve25519_SCALARBYTES
@@ -503,7 +503,7 @@ salt_scalarmult(nif_heap_t *hp, int argc, const nif_term_t argv[])
   /* Allocate space for plain text. NB: Passing ENOMEM as BADARG. */
   if (! enif_alloc_binary(crypto_scalarmult_BYTES, &q))
     return (BADARG);
-  
+
   crypto_scalarmult(q.data, n.data, p.data);
   return (enif_make_binary(hp, &q));
 }
@@ -529,7 +529,7 @@ salt_scalarmult_base(nif_heap_t *hp, int argc, const nif_term_t argv[])
   /* Allocate space for plain text. NB: Passing ENOMEM as BADARG. */
   if (! enif_alloc_binary(crypto_scalarmult_BYTES, &q))
     return (BADARG);
-  
+
   crypto_scalarmult_base(q.data, n.data);
   return (enif_make_binary(hp, &q));
 }
@@ -645,6 +645,117 @@ salt_sign_open(nif_heap_t *hp, int argc, const nif_term_t argv[])
   else
     sub = raw;
   return (enif_make_tuple2(hp, tag, sub));
+}
+
+static nif_term_t
+salt_sign_detached(nif_heap_t *hp, int argc, const nif_term_t argv[])
+{
+  unsigned long long len;
+  nif_bin_t sig;
+  nif_bin_t sm;
+  nif_bin_t sk;
+
+  if(argc != 2) {
+    return (BADARG);
+  }
+
+  if(!enif_inspect_binary(hp, argv[0], &sm)) {
+    return (BADARG);
+  }
+
+  if(!enif_inspect_binary(hp, argv[1], &sk) || sk.size != crypto_sign_SECRETKEYBYTES) {
+    return (BADARG);
+  }
+
+  if(!enif_alloc_binary(crypto_sign_BYTES, &sig)) {
+    return (BADARG);
+  }
+
+  if (crypto_sign_detached(sig.data, &len, sm.data, sm.size, sk.data) != 0) {
+    enif_release_binary(&sig);
+
+    return (enif_make_atom(hp, "error"));
+  } else {
+    nif_term_t bin = enif_make_binary(hp, &sig);
+
+    if(len != sig.size) {
+      bin = enif_make_sub_binary(hp, bin, 0, len);
+    }
+
+    return (enif_make_tuple2(hp, enif_make_atom(hp, "ok"), bin));
+  }
+}
+
+static nif_term_t
+salt_sign_verify_detached(nif_heap_t *hp, int argc, const nif_term_t argv[])
+{
+  nif_bin_t sig;
+  nif_bin_t sm;
+  nif_bin_t pk;
+
+  if(argc != 3) {
+    return (BADARG);
+  }
+
+  if(!enif_inspect_binary(hp, argv[0], &sig)) {
+    return (BADARG);
+  }
+
+  if(!enif_inspect_binary(hp, argv[1], &sm)) {
+    return (BADARG);
+  }
+
+  if(!enif_inspect_binary(hp, argv[2], &pk) || pk.size != crypto_sign_PUBLICKEYBYTES) {
+    return (BADARG);
+  }
+
+  if(crypto_sign_verify_detached(sig.data, sm.data, sm.size, pk.data) != 0) {
+    return (enif_make_atom(hp, "error"));
+  } else {
+    return (enif_make_atom(hp, "ok"));
+  }
+}
+
+static nif_term_t
+salt_sign_ed25519_pk_to_curve25519(nif_heap_t *hp, int argc, const nif_term_t argv[])
+{
+  nif_bin_t ed_pk;
+  nif_bin_t c_pk;
+  nif_term_t raw;
+
+  if (argc != 1)
+    return (BADARG);
+
+  if (! enif_inspect_binary(hp, argv[0], &ed_pk))
+    return (BADARG);
+
+  if (! enif_alloc_binary(crypto_box_PUBLICKEYBYTES, &c_pk))
+    return (BADARG);
+
+  (void)crypto_sign_ed25519_pk_to_curve25519(c_pk.data, ed_pk.data);
+  raw = enif_make_binary(hp, &c_pk);
+  return (raw);
+}
+
+static nif_term_t
+salt_sign_ed25519_sk_to_curve25519(nif_heap_t *hp, int argc, const nif_term_t argv[])
+{
+  nif_bin_t ed_sk;
+  nif_bin_t c_sk;
+  nif_term_t raw;
+
+  if (argc != 1)
+    return (BADARG);
+
+  if (! enif_inspect_binary(hp, argv[0], &ed_sk))
+    return (BADARG);
+
+  if (! enif_alloc_binary(crypto_box_SECRETKEYBYTES, &c_sk))
+    return (BADARG);
+
+  (void)crypto_sign_ed25519_sk_to_curve25519(c_sk.data, ed_sk.data);
+  raw = enif_make_binary(hp, &c_sk);
+  return (raw);
 }
 
 static nif_term_t
@@ -1160,14 +1271,14 @@ salt_worker_loop(void *arg)
   sc->sc_req_first = NULL;
   sc->sc_req_lastp = &sc->sc_req_first;
   sc->sc_req_npend = 0;
-  
+
   enif_mutex_unlock(sc->sc_lock);
 
   /* Handle all requests, release when done. */
  next:
   salt_handle_req(sc, sm);
   tmp = sm->msg_next;
-  
+
   enif_free_env(sm->msg_heap);
   enif_free(sm);
 
@@ -1203,7 +1314,7 @@ salt_handle_req(struct salt_pcb *sc, struct salt_msg *sm)
       err = "enomem";
       goto fail_1;
     }
-    
+
     crypto_box_keypair(pk.data, sk.data);
     salt_reply_keypair(sm, &pk, &sk);
     break;
@@ -1217,7 +1328,7 @@ salt_handle_req(struct salt_pcb *sc, struct salt_msg *sm)
       err = "enomem";
       goto fail_1;
     }
-    
+
     crypto_sign_keypair(pk.data, sk.data);
     salt_reply_keypair(sm, &pk, &sk);
     break;
@@ -1324,7 +1435,7 @@ print_bytes(const char *tag, nif_bin_t *buf)
   iov[0].iov_len = strlen(tag);
   iov[1].iov_base = str;
   iov[1].iov_len = cnt;
-  
+
   str[0] = ' ';
   str[1] = '0';
   str[2] = 'x';
@@ -1405,6 +1516,10 @@ static nif_func_t salt_exports[] = {
   {"salt_sign_keypair", 3, salt_sign_keypair},
   {"salt_sign", 2, salt_sign},
   {"salt_sign_open", 2, salt_sign_open},
+  {"salt_sign_detached", 2, salt_sign_detached},
+  {"salt_sign_verify_detached", 3, salt_sign_verify_detached},
+  {"salt_sign_ed25519_pk_to_curve25519", 1, salt_sign_ed25519_pk_to_curve25519},
+  {"salt_sign_ed25519_sk_to_curve25519", 1, salt_sign_ed25519_sk_to_curve25519},
   {"salt_secretbox", 3, salt_secretbox},
   {"salt_secretbox_open", 3, salt_secretbox_open},
   {"salt_stream", 3, salt_stream},

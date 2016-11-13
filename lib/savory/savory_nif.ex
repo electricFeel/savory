@@ -52,6 +52,22 @@ defmodule Savory.SavoryNif do
     :erlang.error(:salt_not_loaded)
   end
 
+  def salt_sign_detached(_, _) do
+    :erlang.error(:salt_not_loaded)
+  end
+
+  def salt_sign_verify_detached(_, _, _) do
+    :erlang.error(:salt_not_loaded)
+  end
+
+  def salt_sign_ed25519_pk_to_curve25519(_) do
+    :erlang.error(:salt_not_loaded)
+  end
+
+  def salt_sign_ed25519_sk_to_curve25519(_) do
+    :erlang.error(:salt_not_loaded)
+  end
+
   def salt_secretbox(_, _, _) do
     :erlang.error(:salt_not_loaded)
   end
